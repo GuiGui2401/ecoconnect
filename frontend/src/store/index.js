@@ -40,3 +40,20 @@ export const useNotifStore = create((set) => ({
   decrement:   ()  => set((s) => ({ unreadCount: Math.max(0, s.unreadCount - 1) })),
   reset:       ()  => set({ unreadCount: 0 }),
 }))
+
+// src/store/settingsStore.js
+export const useSettingsStore = create(
+  persist(
+    (set) => ({
+      darkMode: false,
+      language: 'fr',
+      notificationsEnabled: true,
+
+      setDarkMode: (val) => set({ darkMode: val }),
+      setLanguage: (val) => set({ language: val }),
+      setNotifications: (val) => set({ notificationsEnabled: val }),
+      toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
+    }),
+    { name: 'eco-settings' }
+  )
+)

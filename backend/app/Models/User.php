@@ -68,6 +68,11 @@ class User extends Authenticatable
         return $this->hasMany(AiConversation::class);
     }
 
+    public function savedHubItems()
+    {
+        return $this->hasMany(UserSavedHubItem::class);
+    }
+
     public function getAvatarUrlAttribute(): string
     {
         return $this->avatar
@@ -96,4 +101,3 @@ class User extends Authenticatable
         return $query->orderByDesc('points')->limit($limit);
     }
 }
-

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\LearningController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\MapController;
+use App\Http\Controllers\Api\EnvironmentHubController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +33,7 @@ Route::prefix('v1')->group(function () {
     // Public map data
     Route::get('incidents/public',    [IncidentController::class, 'publicIndex']);
     Route::get('stats/public',        [StatsController::class,    'publicStats']);
+    Route::get('environment-hub',      [EnvironmentHubController::class, 'index']);
 
     // ── AUTHENTICATED ──────────────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
@@ -73,6 +75,10 @@ Route::prefix('v1')->group(function () {
         Route::get('learning',              [LearningController::class, 'index']);
         Route::get('learning/{resource}',   [LearningController::class, 'show']);
         Route::post('learning/{resource}/complete', [LearningController::class, 'markComplete']);
+
+        // Environmental Hub
+        Route::get('environment-hub/favorites', [EnvironmentHubController::class, 'favorites']);
+        Route::post('environment-hub/favorites', [EnvironmentHubController::class, 'toggleFavorite']);
 
         // Notifications
         Route::get('notifications',             [NotificationController::class, 'index']);

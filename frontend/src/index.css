@@ -10,6 +10,10 @@
     color: #2c3e50;
     -webkit-font-smoothing: antialiased;
   }
+  .dark body {
+    background: #090f0c;
+    color: #e5e7eb;
+  }
   h1, h2, h3, h4, h5, h6 { font-family: 'Space Grotesk', sans-serif; }
 }
 
@@ -32,6 +36,68 @@
   .badge-high   { @apply bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-xs font-semibold; }
   .badge-medium { @apply bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-xs font-semibold; }
   .badge-low    { @apply bg-green-pale text-green-primary px-2 py-0.5 rounded-full text-xs font-semibold; }
+}
+
+.dark .app-shell,
+.dark .bg-white {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: #111827 !important;
+}
+
+.dark .card {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+  color: #e5e7eb;
+}
+
+.dark .input,
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #0b1220 !important;
+  border-color: #253041 !important;
+  color: #e5e7eb !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+.dark nav {
+  background-color: #0f172a !important;
+  border-color: #1f2937 !important;
+}
+
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-gray-600 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-gray-500,
+.dark .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.dark .border-gray-50,
+.dark .border-gray-100,
+.dark .border-gray-200 {
+  border-color: #1f2937 !important;
+}
+
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover {
+  background-color: #1f2937 !important;
+}
+
+.dark .bg-green-pale {
+  background-color: rgba(39, 174, 96, 0.14) !important;
 }
 
 /* Leaflet custom markers */

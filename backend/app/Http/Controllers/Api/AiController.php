@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Log;
 
 class AiController extends Controller
 {
-    private const MODEL   = 'claude-sonnet-4-20250514';
     private const MAX_TOKENS = 1024;
     private const SYSTEM  = <<<PROMPT
         Tu es l'Eco Assistant d'EcoConnect, un guide intelligent spécialisé en écologie,
@@ -41,6 +40,16 @@ class AiController extends Controller
 
         $user    = $request->user();
         $message = $request->message;
+        $apiKey  = config('services.anthropic.key');
+        $model   = config('services.anthropic.model', 'claude-sonnet-4-6');
+
+        if (! $apiKey) {
+            Log::error('Claude API key missing');
+
+            return response()->json([
+                'message' => 'La cle Claude est absente. Configure CLAUDE_API_KEY dans backend/.env.',
+            ], 503);
+        }
 
         // Récupérer ou créer la conversation
         $conversation = $request->conversation_id
@@ -60,19 +69,30 @@ class AiController extends Controller
 
         try {
             $response = Http::withHeaders([
-                'x-api-key'         => config('services.anthropic.key'),
+                'x-api-key'         => $apiKey,
                 'anthropic-version' => '2023-06-01',
                 'Content-Type'      => 'application/json',
             ])->timeout(30)->post('https://api.anthropic.com/v1/messages', [
-                'model'      => self::MODEL,
+                'model'      => $model,
                 'max_tokens' => self::MAX_TOKENS,
                 'system'     => self::SYSTEM,
                 'messages'   => $apiMessages,
             ]);
 
             if (! $response->successful()) {
-                Log::error('Claude API error', ['status' => $response->status(), 'body' => $response->body()]);
-                return response()->json(['error' => 'AI service unavailable'], 503);
+                $errorType = $response->json('error.type');
+                $errorMessage = $response->json('error.message');
+
+                Log::error('Claude API error', [
+                    'status' => $response->status(),
+                    'type' => $errorType,
+                    'message' => $errorMessage,
+                    'model' => $model,
+                ]);
+
+                return response()->json([
+                    'message' => $this->userFacingClaudeError($response->status(), $errorType, $errorMessage, $model),
+                ], 503);
             }
 
             $reply = $response->json('content.0.text', 'Je n\'ai pas pu répondre. Réessaie! 🌿');
@@ -88,8 +108,21 @@ class AiController extends Controller
 
         } catch (\Exception $e) {
             Log::error('AI chat exception', ['error' => $e->getMessage()]);
-            return response()->json(['error' => 'Internal error'], 500);
+            return response()->json(['message' => 'Erreur interne pendant l appel Claude. Consulte storage/logs/laravel.log.'], 500);
         }
+    }
+
+    private function userFacingClaudeError(int $status, ?string $type, ?string $message, string $model): string
+    {
+        return match ($type) {
+            'authentication_error' => 'Claude refuse la cle API. Verifie CLAUDE_API_KEY dans backend/.env.',
+            'permission_error' => 'Cette cle Claude n a pas acces au modele configure: '.$model.'.',
+            'not_found_error' => 'Le modele Claude configure n est pas disponible: '.$model.'. Mets CLAUDE_MODEL=claude-sonnet-4-6 dans backend/.env.',
+            'rate_limit_error' => 'Claude indique une limite de debit atteinte. Attends un peu puis reessaie.',
+            'overloaded_error' => 'Claude est surcharge pour le moment. Reessaie dans quelques instants.',
+            'invalid_request_error' => 'Claude a refuse la requete: '.($message ?: 'requete invalide'),
+            default => 'Claude API indisponible pour le moment'.($status ? " (HTTP {$status})" : '').'.',
+        };
     }
 
     /**

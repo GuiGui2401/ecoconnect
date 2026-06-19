@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuthStore } from '@/store'
+import { useAuthStore, useSettingsStore } from '@/store'
 import { AppLayout } from '@/components/layout/Layout'
 import {
   AiPage,
@@ -16,6 +17,9 @@ import {
   ReportPage,
   SettingsPage,
   StatsPage,
+  AboutPage,
+  EnvironmentHubPage,
+  HelpSupportPage,
 } from '@/pages'
 
 // Guard pour routes protégées
@@ -31,10 +35,21 @@ function PublicRoute({ children }) {
 }
 
 export default function App() {
+  const darkMode = useSettingsStore((s) => s.darkMode)
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [darkMode])
+
   return (
     <Routes>
       {/* Public */}
       <Route path="/"        element={<HomePage />} />
+      <Route path="/environment-hub" element={<EnvironmentHubPage />} />
       <Route path="/login"   element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
@@ -51,6 +66,8 @@ export default function App() {
         <Route path="/profile"      element={<ProfilePage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/settings"     element={<SettingsPage />} />
+        <Route path="/about"        element={<AboutPage />} />
+        <Route path="/help"         element={<HelpSupportPage />} />
       </Route>
 
       {/* Fallback */}

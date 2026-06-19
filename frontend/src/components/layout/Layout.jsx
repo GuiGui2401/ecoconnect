@@ -1,11 +1,12 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, Bot, Home, Map, Target, User } from 'lucide-react'
+import { Bell, BookOpen, Bot, Home, Map, Rss, Target, User } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useNotifStore } from '@/store'
+import { useT } from '@/lib/i18n'
 
 export function AppLayout() {
   return (
-    <div className="flex flex-col min-h-screen max-w-[480px] mx-auto bg-white shadow-2xl relative">
+    <div className="app-shell flex flex-col min-h-screen max-w-[480px] mx-auto bg-white shadow-2xl relative">
       <TopNav />
       <main className="flex-1 overflow-y-auto pb-2 page-enter">
         <Outlet />
@@ -49,20 +50,22 @@ function TopNav() {
   )
 }
 
-const NAV_ITEMS = [
-  { path: '/dashboard', icon: Home, label: 'Home' },
-  { path: '/map', icon: Map, label: 'Map' },
-  { path: '/challenges', icon: Target, label: 'Challenges' },
-  { path: '/ai', icon: Bot, label: 'AI' },
-]
-
 function BottomNav() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const t = useT()
+  const navItems = [
+    { path: '/dashboard', icon: Home, label: t('home') },
+    { path: '/environment-hub', icon: BookOpen, label: t('hub') },
+    { path: '/feed', icon: Rss, label: t('feed') },
+    { path: '/map', icon: Map, label: t('map') },
+    { path: '/challenges', icon: Target, label: t('challenges') },
+    { path: '/ai', icon: Bot, label: t('ai') },
+  ]
 
   return (
-    <nav className="sticky bottom-0 z-50 bg-white border-t border-gray-100 h-[68px] flex items-center justify-around px-2">
-      {NAV_ITEMS.slice(0, 2).map(({ path, icon: Icon, label }) => (
+    <nav className="sticky bottom-0 z-50 bg-white border-t border-gray-100 h-[70px] flex items-center justify-around px-1">
+      {navItems.slice(0, 3).map(({ path, icon: Icon, label }) => (
         <NavItem
           key={path}
           icon={Icon}
@@ -79,7 +82,7 @@ function BottomNav() {
         +
       </button>
 
-      {NAV_ITEMS.slice(2).map(({ path, icon: Icon, label }) => (
+      {navItems.slice(3).map(({ path, icon: Icon, label }) => (
         <NavItem
           key={path}
           icon={Icon}
@@ -97,13 +100,12 @@ function NavItem({ icon: Icon, label, active, onClick }) {
     <button
       onClick={onClick}
       className={clsx(
-        'flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all',
+        'flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-xl transition-all min-w-[42px]',
         active ? 'text-green-primary' : 'text-gray-400 hover:text-gray-600',
       )}
     >
       <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-      <span className="text-[10px] font-medium">{label}</span>
+      <span className="text-[9px] font-medium leading-none">{label}</span>
     </button>
   )
 }
-

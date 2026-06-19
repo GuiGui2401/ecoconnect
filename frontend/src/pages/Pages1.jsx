@@ -12,10 +12,11 @@ import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { authApi, challengesApi, incidentsApi, postsApi, statsApi, userApi } from '@/api'
+import { apiAssetUrl, authApi, challengesApi, incidentsApi, postsApi, statsApi, userApi } from '@/api'
 import { useAuthStore } from '@/store'
-import { Heart, MessageCircle, Send, Share2 } from 'lucide-react'
+import { Heart, ImagePlus, MessageCircle, Send, Share2, X } from 'lucide-react'
 import { asCollection, EcoIcon, INCIDENT_TYPES, roleMeta } from '@/lib/ecoconnect'
+import { useT } from '@/lib/i18n'
 
 const schema = z.object({
   email:    z.string().email('Email invalide'),
@@ -178,6 +179,7 @@ export function RegisterPage() {
 export function DashboardPage() {
   const user     = useAuthStore((s) => s.user)
   const navigate = useNavigate()
+  const t = useT()
   const role = roleMeta(user?.profile_type)
   const RoleIcon = role.icon
 
@@ -195,12 +197,12 @@ export function DashboardPage() {
       {/* User Card */}
       <div className="mx-4 mt-4 bg-gradient-to-br from-green-primary to-green-mid rounded-2xl p-5 text-white relative overflow-hidden">
         <div className="absolute right-4 top-1/2 -translate-y-1/2 text-6xl opacity-20">🏆</div>
-        <p className="text-sm opacity-80">Hello, {user?.name?.split(' ')[0]}! 👋</p>
+        <p className="text-sm opacity-80">{t('hello')}, {user?.name?.split(' ')[0]}! 👋</p>
         <p className="font-display font-bold text-xl mt-0.5">{user?.name}</p>
         <p className="text-xs opacity-70 mt-0.5">{user?.level || '🌱 Eco Starter'}</p>
         <div className="flex items-end gap-2 mt-3">
           <span className="font-display font-bold text-3xl">{stats?.user_points ?? user?.points ?? 0}</span>
-          <span className="text-sm opacity-70 mb-1">Points</span>
+          <span className="text-sm opacity-70 mb-1">{t('points')}</span>
         </div>
       </div>
 
@@ -223,9 +225,9 @@ export function DashboardPage() {
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-2.5 mx-4 mt-3">
         {[
-          { label: 'Actions',    value: stats?.incidents_count ?? 0 },
-          { label: 'Reports',    value: stats?.global_incidents ?? 0 },
-          { label: 'Challenges', value: stats?.challenges_done ?? 0 },
+          { label: t('actions'),    value: stats?.incidents_count ?? 0 },
+          { label: t('reports'),    value: stats?.global_incidents ?? 0 },
+          { label: t('challenges'), value: stats?.challenges_done ?? 0 },
         ].map(({ label, value }) => (
           <div key={label} className="card p-3 text-center">
             <p className="font-display font-bold text-2xl text-green-primary">{value}</p>
@@ -236,8 +238,8 @@ export function DashboardPage() {
 
       {/* Badges */}
       <div className="mx-4 mt-4 flex items-center justify-between mb-3">
-        <p className="font-display font-bold text-base">🏅 Badges</p>
-        <button onClick={() => navigate('/profile')} className="text-xs font-semibold text-green-primary">View all</button>
+        <p className="font-display font-bold text-base">🏅 {t('badges')}</p>
+        <button onClick={() => navigate('/profile')} className="text-xs font-semibold text-green-primary">{t('viewAll')}</button>
       </div>
       <div className="flex gap-3 px-4 overflow-x-auto pb-1 scrollbar-none">
         {badgeList.map(({ icon, name, slug }) => (
@@ -278,8 +280,8 @@ export function DashboardPage() {
 
       {/* Recent Alerts */}
       <div className="mx-4 mt-4 flex items-center justify-between mb-3">
-        <p className="font-display font-bold text-base">⚠️ Nearby Alerts</p>
-        <button onClick={() => navigate('/map')} className="text-xs font-semibold text-green-primary">View on map</button>
+        <p className="font-display font-bold text-base">⚠️ {t('nearbyAlerts')}</p>
+        <button onClick={() => navigate('/map')} className="text-xs font-semibold text-green-primary">{t('viewOnMap')}</button>
       </div>
       <div className="mx-4 space-y-2.5">
         {alertList.map((incident) => {
@@ -313,11 +315,18 @@ export function DashboardPage() {
 export function FeedPage() {
   const qc      = useQueryClient()
   const user    = useAuthStore((s) => s.user)
-  const [tab, setTab] = useState('Following')
+  const t = useT()
+  const [tab, setTab] = useState('following')
   const [content, setContent] = useState('')
+  const [mediaFile, setMediaFile] = useState(null)
+  const [mediaPreview, setMediaPreview] = useState(null)
   const [commentingPostId, setCommentingPostId] = useState(null)
   const [commentText, setCommentText] = useState('')
-  const TABS = ['Following', 'Groups', 'For You']
+  const TABS = [
+    { id: 'following', label: t('following') },
+    { id: 'groups', label: t('groups') },
+    { id: 'for-you', label: t('forYou') },
+  ]
 
   const { data, isLoading } = useQuery({
     queryKey: ['posts'],
@@ -330,14 +339,21 @@ export function FeedPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: () => postsApi.create({ content }),
+    mutationFn: () => {
+      const fd = new FormData()
+      fd.append('content', content)
+      if (mediaFile) fd.append('media[]', mediaFile)
+      return postsApi.create(fd)
+    },
     onSuccess: () => {
       setContent('')
-      toast.success('Post publie')
+      setMediaFile(null)
+      setMediaPreview(null)
+      toast.success(t('postPublished'))
       qc.invalidateQueries({ queryKey: ['posts'] })
       qc.invalidateQueries({ queryKey: ['stats'] })
     },
-    onError: () => toast.error('Impossible de publier ce post'),
+    onError: () => toast.error(t('postError')),
   })
 
   const commentMutation = useMutation({
@@ -345,10 +361,10 @@ export function FeedPage() {
     onSuccess: () => {
       setCommentText('')
       setCommentingPostId(null)
-      toast.success('Commentaire ajoute')
+      toast.success(t('commentAdded'))
       qc.invalidateQueries({ queryKey: ['posts'] })
     },
-    onError: () => toast.error('Impossible d ajouter ce commentaire'),
+    onError: () => toast.error(t('commentError')),
   })
 
   const POSTS = asCollection(data)
@@ -357,11 +373,11 @@ export function FeedPage() {
     <div className="pb-4">
       {/* Tabs */}
       <div className="flex gap-2 px-4 pt-4 pb-2">
-        {TABS.map(t => (
-          <button key={t} onClick={() => setTab(t)}
+        {TABS.map((item) => (
+          <button key={item.id} onClick={() => setTab(item.id)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all
-              ${tab === t ? 'bg-green-primary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-            {t}
+              ${tab === item.id ? 'bg-green-primary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+            {item.label}
           </button>
         ))}
       </div>
@@ -381,26 +397,57 @@ export function FeedPage() {
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Partage une action, une alerte ou une idee..."
+            placeholder={t('sharePlaceholder')}
             rows={3}
             className="flex-1 px-3 py-2 border border-gray-100 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-green-primary resize-none"
           />
         </div>
+        {mediaPreview && (
+          <div className="relative mt-3 overflow-hidden rounded-xl border border-gray-100">
+            <img src={mediaPreview} alt="Apercu" className="w-full max-h-56 object-cover" />
+            <button
+              type="button"
+              onClick={() => {
+                setMediaFile(null)
+                setMediaPreview(null)
+              }}
+              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
+              aria-label={t('removePhoto')}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
         <div className="flex items-center justify-between mt-2">
-          <p className="text-[11px] text-gray-400">Les hashtags sont detectes automatiquement.</p>
+          <label className="flex items-center gap-1.5 text-xs font-semibold text-green-primary cursor-pointer">
+            <ImagePlus size={15} />
+            {t('addPhoto')}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                setMediaFile(file)
+                setMediaPreview(URL.createObjectURL(file))
+              }}
+            />
+          </label>
+          <p className="hidden sm:block text-[11px] text-gray-400">{t('hashtagsAuto')}</p>
           <button
             type="submit"
             disabled={createMutation.isPending || !content.trim()}
             className="flex items-center gap-1.5 bg-green-primary text-white text-xs font-semibold px-3 py-2 rounded-lg disabled:opacity-50"
           >
-            <Send size={14} /> Publier
+            <Send size={14} /> {t('publish')}
           </button>
         </div>
       </form>
 
       {/* Posts */}
       <div className="space-y-3 px-4">
-        {isLoading && <div className="card p-4 text-sm text-gray-500">Chargement du fil...</div>}
+        {isLoading && <div className="card p-4 text-sm text-gray-500">{t('loadingFeed')}</div>}
 
         {POSTS.map(post => (
           <div key={post.id} className="card overflow-hidden">
@@ -427,8 +474,12 @@ export function FeedPage() {
               ))}
             </p>
 
-            {post.media_urls?.[0] && (
-              <img src={post.media_urls[0]} alt="" className="w-full max-h-64 object-cover" />
+            {post.media_urls?.length > 0 && (
+              <div className="grid gap-1">
+                {post.media_urls.map((url) => (
+                  <img key={url} src={apiAssetUrl(url)} alt="" className="w-full max-h-64 object-cover" />
+                ))}
+              </div>
             )}
 
             <div className="flex gap-1 p-2 border-t border-gray-50">
@@ -463,7 +514,7 @@ export function FeedPage() {
                 <input
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Ajouter un commentaire..."
+                  placeholder={t('addComment')}
                   className="flex-1 px-3 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-primary"
                 />
                 <button
@@ -480,7 +531,7 @@ export function FeedPage() {
 
         {!isLoading && POSTS.length === 0 && (
           <div className="card p-5 text-center text-sm text-gray-500">
-            Aucun post pour l instant. Publie la premiere action de la communaute.
+            {t('noPosts')}
           </div>
         )}
       </div>

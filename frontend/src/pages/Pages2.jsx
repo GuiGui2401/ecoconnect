@@ -11,6 +11,130 @@ import { incidentsApi, challengesApi, statsApi, aiApi } from '@/api'
 import { useAuthStore } from '@/store'
 import { asCollection, EcoIcon, INCIDENT_TYPES, STATUS_META, uniqueById } from '@/lib/ecoconnect'
 
+function renderInlineMarkdown(text) {
+  const parts = String(text).split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
+
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index} className="font-semibold text-gray-900">{part.slice(2, -2)}</strong>
+    }
+
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={index} className="rounded bg-gray-100 px-1 py-0.5 text-[12px] text-gray-800">{part.slice(1, -1)}</code>
+    }
+
+    return <span key={index}>{part}</span>
+  })
+}
+
+function MarkdownMessage({ content }) {
+  const lines = String(content || '').split(/\r?\n/)
+  const blocks = []
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i].trim()
+    if (!line) continue
+
+    const heading = line.match(/^(#{1,3})\s+(.+)$/)
+    if (heading) {
+      const level = heading[1].length
+      blocks.push(
+        <p key={i} className={`font-display font-bold text-gray-900 ${level === 1 ? 'text-base' : 'text-sm'} ${blocks.length ? 'mt-3' : ''}`}>
+          {renderInlineMarkdown(heading[2])}
+        </p>,
+      )
+      continue
+    }
+
+    if (line.startsWith('>')) {
+      blocks.push(
+        <div key={i} className="mt-2 border-l-4 border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 rounded-r-lg">
+          {renderInlineMarkdown(line.replace(/^>\s*/, ''))}
+        </div>,
+      )
+      continue
+    }
+
+    if (/^[-*]\s+/.test(line)) {
+      const items = []
+      while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^[-*]\s+/, ''))
+        i += 1
+      }
+      i -= 1
+      blocks.push(
+        <ul key={i} className="mt-2 list-disc space-y-1 pl-5">
+          {items.map((item, index) => <li key={index}>{renderInlineMarkdown(item)}</li>)}
+        </ul>,
+      )
+      continue
+    }
+
+    if (/^\d+\.\s+/.test(line)) {
+      const items = []
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^\d+\.\s+/, ''))
+        i += 1
+      }
+      i -= 1
+      blocks.push(
+        <ol key={i} className="mt-2 list-decimal space-y-1 pl-5">
+          {items.map((item, index) => <li key={index}>{renderInlineMarkdown(item)}</li>)}
+        </ol>,
+      )
+      continue
+    }
+
+    if (line.startsWith('|') && line.endsWith('|')) {
+      const rows = []
+      while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
+        const row = lines[i].trim()
+        if (!/^\|[\s:-]+\|?$/.test(row.replace(/\|/g, '|'))) {
+          rows.push(row.split('|').slice(1, -1).map((cell) => cell.trim()))
+        }
+        i += 1
+      }
+      i -= 1
+      const [head, ...body] = rows
+      blocks.push(
+        <div key={i} className="mt-3 overflow-x-auto rounded-xl border border-gray-100">
+          <table className="w-full min-w-[240px] text-left text-xs">
+            {head && (
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>{head.map((cell, index) => <th key={index} className="px-2 py-2 font-semibold">{renderInlineMarkdown(cell)}</th>)}</tr>
+              </thead>
+            )}
+            <tbody>
+              {body.map((row, rowIndex) => (
+                <tr key={rowIndex} className="border-t border-gray-100">
+                  {row.map((cell, cellIndex) => <td key={cellIndex} className="px-2 py-2 align-top">{renderInlineMarkdown(cell)}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>,
+      )
+      continue
+    }
+
+    const paragraph = [line]
+    while (i + 1 < lines.length) {
+      const next = lines[i + 1].trim()
+      if (!next || /^(#{1,3})\s+/.test(next) || next.startsWith('>') || /^[-*]\s+/.test(next) || /^\d+\.\s+/.test(next) || next.startsWith('|')) break
+      paragraph.push(next)
+      i += 1
+    }
+
+    blocks.push(
+      <p key={i} className={blocks.length ? 'mt-2' : ''}>
+        {renderInlineMarkdown(paragraph.join(' '))}
+      </p>,
+    )
+  }
+
+  return <div className="space-y-1">{blocks}</div>
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // src/pages/MapPage.jsx
@@ -380,8 +504,12 @@ export function AiPage() {
       const { data } = await aiApi.chat(msg, convId)
       setConvId(data.conversation_id)
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Oops! Vérifie ta connexion et réessaie. 🌿" }])
+    } catch (error) {
+      const apiMessage = error.response?.data?.message
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: apiMessage || "Oops! Vérifie ta connexion et réessaie. 🌿",
+      }])
     } finally {
       setLoading(false)
     }
@@ -413,11 +541,11 @@ export function AiPage() {
       <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed
+            <div className={`${m.role === 'user' ? 'max-w-[78%]' : 'max-w-[92%]'} px-4 py-3 rounded-2xl text-sm leading-relaxed
               ${m.role === 'user'
                 ? 'bg-green-primary text-white rounded-br-sm'
                 : 'bg-white border border-gray-100 text-gray-700 rounded-bl-sm shadow-sm'}`}>
-              {m.content}
+              {m.role === 'assistant' ? <MarkdownMessage content={m.content} /> : m.content}
             </div>
           </div>
         ))}

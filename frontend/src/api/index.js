@@ -3,9 +3,19 @@ import axios from 'axios'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
-  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+  headers: { Accept: 'application/json' },
   withCredentials: false,
 })
+
+export function apiAssetUrl(path) {
+  if (!path) return ''
+  if (/^https?:\/\//i.test(path)) return path
+
+  const apiUrl = import.meta.env.VITE_API_URL || window.location.origin
+  const origin = new URL(apiUrl, window.location.origin).origin
+
+  return `${origin}${path.startsWith('/') ? path : `/${path}`}`
+}
 
 // Injecter le token Sanctum automatiquement
 api.interceptors.request.use((config) => {
@@ -86,6 +96,13 @@ export const learningApi = {
   list:     (params) => api.get('/learning', { params }),
   get:      (id)     => api.get(`/learning/${id}`),
   complete: (id)     => api.post(`/learning/${id}/complete`),
+}
+
+// ─── src/api/environment.js ──────────────────────────────────────────────────
+export const environmentApi = {
+  list:           () => api.get('/environment-hub'),
+  favorites:      () => api.get('/environment-hub/favorites'),
+  toggleFavorite: (item_type, item_id) => api.post('/environment-hub/favorites', { item_type, item_id }),
 }
 
 // ─── src/api/notifications.js ─────────────────────────────────────────────────

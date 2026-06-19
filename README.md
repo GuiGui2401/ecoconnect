@@ -62,6 +62,7 @@ npm run dev                # http://localhost:5173
 ## 🔑 Variables d'environnement clés
 
 ### Backend `.env`
+
 ```env
 DB_DATABASE=ecoconnect_db
 DB_USERNAME=ecoconnect_user
@@ -73,6 +74,7 @@ FRONTEND_URL=http://localhost:5173
 ```
 
 ### Frontend `.env`
+
 ```env
 VITE_API_URL=http://localhost:8000/api/v1
 ```
@@ -143,8 +145,8 @@ Le script installe automatiquement : Nginx, PHP 8.3-FPM, MySQL, Node.js 20, Comp
 
 | Email                    | Mot de passe  | Rôle  |
 |--------------------------|---------------|-------|
-| admin@ecoconnect.cm      | Admin@2025!   | Admin |
-| emma@ecoconnect.cm       | Demo@2025!    | User  |
+| <admin@ecoconnect.cm>      | Admin@2025!   | Admin |
+| <emma@ecoconnect.cm>       | Demo@2025!    | User  |
 
 ---
 
