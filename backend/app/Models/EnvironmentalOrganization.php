@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasHubTranslations;
 use Illuminate\Database\Eloquent\Model;
 
 class EnvironmentalOrganization extends Model
 {
+    use HasHubTranslations;
+
     protected $table = 'environment_organizations';
 
     protected $fillable = [
@@ -19,6 +22,7 @@ class EnvironmentalOrganization extends Model
         'latitude',
         'longitude',
         'tags',
+        'translations',
         'is_active',
     ];
 
@@ -26,6 +30,7 @@ class EnvironmentalOrganization extends Model
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
         'tags' => 'array',
+        'translations' => 'array',
         'is_active' => 'boolean',
     ];
 

@@ -20,36 +20,47 @@ class EnvironmentHubController extends Controller
         'legal_guide' => EnvironmentalLegalGuide::class,
     ];
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $locale = $this->locale($request);
+
         return response()->json([
             'news' => EnvironmentalNews::published()
                 ->latest('published_at')
                 ->get()
-                ->map(fn (EnvironmentalNews $item) => $this->formatNews($item)),
+                ->map(fn (EnvironmentalNews $item) => $this->formatNews($item, $locale)),
             'organizations' => EnvironmentalOrganization::active()
                 ->orderBy('scope')
                 ->orderBy('name')
                 ->get()
-                ->map(fn (EnvironmentalOrganization $item) => $this->formatOrganization($item)),
+                ->map(fn (EnvironmentalOrganization $item) => $this->formatOrganization($item, $locale)),
             'legal_guides' => EnvironmentalLegalGuide::published()
                 ->orderBy('jurisdiction')
                 ->orderBy('topic')
                 ->get()
-                ->map(fn (EnvironmentalLegalGuide $item) => $this->formatLegalGuide($item)),
+                ->map(fn (EnvironmentalLegalGuide $item) => $this->formatLegalGuide($item, $locale)),
         ]);
     }
 
     public function favorites(Request $request): JsonResponse
     {
+        $locale = $this->locale($request);
+
         $favorites = UserSavedHubItem::where('user_id', $request->user()->id)
             ->latest()
             ->get()
-            ->map(fn (UserSavedHubItem $favorite) => $this->formatFavorite($favorite))
+            ->map(fn (UserSavedHubItem $favorite) => $this->formatFavorite($favorite, $locale))
             ->filter()
             ->values();
 
         return response()->json($favorites);
+    }
+
+    private function locale(Request $request): string
+    {
+        return in_array($request->query('lang'), ['fr', 'en'], true)
+            ? $request->query('lang')
+            : 'fr';
     }
 
     public function toggleFavorite(Request $request): JsonResponse
@@ -82,7 +93,7 @@ class EnvironmentHubController extends Controller
 
         return response()->json([
             'saved' => $saved,
-            'favorite' => $saved ? $this->formatFavorite($favorite) : null,
+            'favorite' => $saved ? $this->formatFavorite($favorite, $this->locale($request)) : null,
         ]);
     }
 
@@ -93,7 +104,7 @@ class EnvironmentHubController extends Controller
         return $model ? $model::query()->find($id) : null;
     }
 
-    private function formatFavorite(UserSavedHubItem $favorite): ?array
+    private function formatFavorite(UserSavedHubItem $favorite, string $locale = 'fr'): ?array
     {
         $item = $this->resolveItem($favorite->item_type, $favorite->item_id);
 
@@ -106,29 +117,29 @@ class EnvironmentHubController extends Controller
             'item_type' => $favorite->item_type,
             'item_id' => $favorite->item_id,
             'created_at' => $favorite->created_at,
-            'item' => $this->formatItem($favorite->item_type, $item),
+            'item' => $this->formatItem($favorite->item_type, $item, $locale),
         ];
     }
 
-    private function formatItem(string $type, Model $item): array
+    private function formatItem(string $type, Model $item, string $locale = 'fr'): array
     {
         return match ($type) {
-            'news' => $this->formatNews($item),
-            'organization' => $this->formatOrganization($item),
-            'legal_guide' => $this->formatLegalGuide($item),
+            'news' => $this->formatNews($item, $locale),
+            'organization' => $this->formatOrganization($item, $locale),
+            'legal_guide' => $this->formatLegalGuide($item, $locale),
         };
     }
 
-    private function formatNews(EnvironmentalNews $item): array
+    private function formatNews(EnvironmentalNews $item, string $locale = 'fr'): array
     {
         return [
             'id' => $item->id,
             'item_type' => 'news',
-            'type' => $item->type,
-            'region' => $item->region,
+            'type' => $item->translated('type', $locale),
+            'region' => $item->translated('region', $locale),
             'date' => $item->published_at?->toDateString(),
-            'title' => $item->title,
-            'summary' => $item->summary,
+            'title' => $item->translated('title', $locale),
+            'summary' => $item->translated('summary', $locale),
             'source' => $item->source,
             'url' => $item->source_url,
             'priority' => $item->priority,
@@ -136,16 +147,16 @@ class EnvironmentHubController extends Controller
         ];
     }
 
-    private function formatOrganization(EnvironmentalOrganization $item): array
+    private function formatOrganization(EnvironmentalOrganization $item, string $locale = 'fr'): array
     {
         return [
             'id' => $item->id,
             'item_type' => 'organization',
             'name' => $item->name,
-            'scope' => $item->scope,
-            'region' => $item->region,
-            'focus' => $item->focus,
-            'project' => $item->project,
+            'scope' => $item->translated('scope', $locale),
+            'region' => $item->translated('region', $locale),
+            'focus' => $item->translated('focus', $locale),
+            'project' => $item->translated('project', $locale),
             'website' => $item->website_url,
             'donateUrl' => $item->donate_url,
             'latitude' => $item->latitude,
@@ -154,16 +165,16 @@ class EnvironmentHubController extends Controller
         ];
     }
 
-    private function formatLegalGuide(EnvironmentalLegalGuide $item): array
+    private function formatLegalGuide(EnvironmentalLegalGuide $item, string $locale = 'fr'): array
     {
         return [
             'id' => $item->id,
             'item_type' => 'legal_guide',
-            'jurisdiction' => $item->jurisdiction,
-            'topic' => $item->topic,
-            'title' => $item->title,
-            'summary' => $item->summary,
-            'duties' => $item->duties ?? [],
+            'jurisdiction' => $item->translated('jurisdiction', $locale),
+            'topic' => $item->translated('topic', $locale),
+            'title' => $item->translated('title', $locale),
+            'summary' => $item->translated('summary', $locale),
+            'duties' => $item->translated('duties', $locale) ?? [],
             'url' => $item->official_url,
             'tags' => $item->tags ?? [],
         ];

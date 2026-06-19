@@ -25,9 +25,12 @@ class User extends Authenticatable
         'points',
         'level',
         'is_active',
+        'privacy_settings',
     ];
 
     protected $hidden = ['password', 'remember_token'];
+
+    protected $appends = ['avatar_url'];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -35,6 +38,7 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
+        'privacy_settings' => 'array',
     ];
 
     public function incidents()
@@ -99,5 +103,18 @@ class User extends Authenticatable
     public function scopeTopRanked($query, int $limit)
     {
         return $query->orderByDesc('points')->limit($limit);
+    }
+
+    /**
+     * Exclure les utilisateurs ayant désactivé leur présence au classement.
+     * (privacy_settings null ou clé absente = visible par défaut).
+     */
+    public function scopeVisibleOnLeaderboard($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('privacy_settings')
+                ->orWhereRaw("JSON_EXTRACT(privacy_settings, '$.show_on_leaderboard') IS NULL")
+                ->orWhere('privacy_settings->show_on_leaderboard', true);
+        });
     }
 }

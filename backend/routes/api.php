@@ -47,6 +47,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/',           [UserController::class, 'me']);
             Route::put('/',           [UserController::class, 'update']);
             Route::post('avatar',     [UserController::class, 'uploadAvatar']);
+            Route::put('privacy',     [UserController::class, 'updatePrivacy']);
+            Route::post('password',   [UserController::class, 'changePassword']);
+            Route::post('logout-others', [UserController::class, 'logoutOthers']);
             Route::get('stats',       [UserController::class, 'stats']);
             Route::get('badges',      [UserController::class, 'badges']);
             Route::get('leaderboard', [UserController::class, 'leaderboard']);

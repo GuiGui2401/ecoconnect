@@ -49,6 +49,7 @@ class StatsController extends Controller
     public function leaderboard(): JsonResponse
     {
         $leaders = User::active()
+            ->visibleOnLeaderboard()
             ->select(['id', 'name', 'avatar', 'points', 'country'])
             ->topRanked(10)
             ->get()

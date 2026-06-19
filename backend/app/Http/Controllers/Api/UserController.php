@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -28,6 +30,55 @@ class UserController extends Controller
         $request->user()->update($validated);
 
         return response()->json($request->user()->fresh());
+    }
+
+    public function updatePrivacy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'profile_public'      => ['required', 'boolean'],
+            'show_on_leaderboard' => ['required', 'boolean'],
+            'show_location'       => ['required', 'boolean'],
+        ]);
+
+        $request->user()->update(['privacy_settings' => $validated]);
+
+        return response()->json($request->user()->fresh());
+    }
+
+    public function changePassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password'         => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Le mot de passe actuel est incorrect.'],
+            ]);
+        }
+
+        $user->update(['password' => $validated['password']]);
+
+        // Révoquer toutes les autres sessions, conserver celle en cours.
+        $current = $user->currentAccessToken();
+        $user->tokens()->where('id', '!=', $current?->id)->delete();
+
+        return response()->json(['message' => 'Mot de passe mis à jour']);
+    }
+
+    public function logoutOthers(Request $request): JsonResponse
+    {
+        $user    = $request->user();
+        $current = $user->currentAccessToken();
+        $count   = $user->tokens()->where('id', '!=', $current?->id)->delete();
+
+        return response()->json([
+            'message'        => 'Autres sessions déconnectées',
+            'revoked_count'  => $count,
+        ]);
     }
 
     public function uploadAvatar(Request $request): JsonResponse
@@ -63,7 +114,7 @@ class UserController extends Controller
     public function leaderboard(): JsonResponse
     {
         return response()->json(
-            User::active()->topRanked(10)->select(['id', 'name', 'avatar', 'points'])->get()
+            User::active()->visibleOnLeaderboard()->topRanked(10)->select(['id', 'name', 'avatar', 'points'])->get()
         );
     }
 

@@ -11,6 +11,7 @@ use App\Models\Incident;
 use App\Models\LearningResource;
 use App\Models\User;
 use App\Models\UserSavedHubItem;
+use App\Support\HubTranslations;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -199,7 +200,8 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($newsItems as $item) {
-            EnvironmentalNews::create([...$item, 'is_published' => true]);
+            $en = HubTranslations::news()[$item['title']] ?? null;
+            EnvironmentalNews::create([...$item, 'is_published' => true, 'translations' => $en ? ['en' => $en] : null]);
         }
 
         $organizations = [
@@ -216,7 +218,8 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($organizations as $organization) {
-            EnvironmentalOrganization::create([...$organization, 'is_active' => true]);
+            $en = HubTranslations::organizations()[$organization['name']] ?? null;
+            EnvironmentalOrganization::create([...$organization, 'is_active' => true, 'translations' => $en ? ['en' => $en] : null]);
         }
 
         $legalGuides = [
@@ -233,7 +236,8 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($legalGuides as $guide) {
-            EnvironmentalLegalGuide::create([...$guide, 'is_published' => true]);
+            $en = HubTranslations::legalGuides()[$guide['title']] ?? null;
+            EnvironmentalLegalGuide::create([...$guide, 'is_published' => true, 'translations' => $en ? ['en' => $en] : null]);
         }
 
         UserSavedHubItem::create([

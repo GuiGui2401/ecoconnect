@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasHubTranslations;
 use Illuminate\Database\Eloquent\Model;
 
 class EnvironmentalNews extends Model
 {
+    use HasHubTranslations;
+
     protected $table = 'environment_news';
 
     protected $fillable = [
@@ -18,12 +21,14 @@ class EnvironmentalNews extends Model
         'published_at',
         'priority',
         'tags',
+        'translations',
         'is_published',
     ];
 
     protected $casts = [
         'published_at' => 'date',
         'tags' => 'array',
+        'translations' => 'array',
         'is_published' => 'boolean',
     ];
 
