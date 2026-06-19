@@ -63,7 +63,7 @@ export function ProfilePage() {
         <div className="w-20 h-20 rounded-full bg-white/20 border-3 border-white/40 flex items-center justify-center text-4xl mx-auto mb-3 overflow-hidden">
           {user?.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : '👤'}
         </div>
-        <h2 className="font-display font-bold text-xl">{user?.name || 'EcoConnect'}</h2>
+        <h2 className="font-display font-bold text-xl">{user?.name || 'Econnect'}</h2>
         <p className="text-sm opacity-75 mt-0.5">{stats?.level || user?.level || 'Eco Starter'}</p>
         <p className="text-xs opacity-60 mt-0.5">Membre depuis {formatMonth(user?.created_at)}</p>
         <div className="flex justify-around mt-5">
@@ -317,7 +317,7 @@ export function SettingsPage() {
         </button>
       </div>
 
-      <p className="text-center text-xs text-gray-400 mt-6">EcoConnect v1.0.0 · © 2026</p>
+      <p className="text-center text-xs text-gray-400 mt-6">Econnect v1.0.0 · © 2026</p>
     </div>
   )
 }
@@ -456,13 +456,13 @@ export function HomePage() {
         <div className="absolute right-4 top-4 text-8xl opacity-10">🌍</div>
         <div className="flex items-center gap-2 mb-6">
           <div className="w-8 h-8 rounded-lg bg-green-light/30 flex items-center justify-center text-xl">🌿</div>
-          <span className="font-display font-bold text-lg">EcoConnect</span>
+          <span className="font-display font-bold text-lg">Econnect</span>
         </div>
         <h1 className="font-display font-bold text-3xl leading-tight mb-3">
           Protect Nature,<br /><span className="text-green-light">Together with AI</span> 🌍
         </h1>
         <p className="text-sm opacity-80 leading-relaxed mb-6">
-          Join the EcoConnect community. Learn, act and make a difference for our planet.
+          Join the Econnect community. Learn, act and make a difference for our planet.
         </p>
         <div className="flex gap-3">
           <button onClick={() => navigate('/register')} className="btn-primary">
@@ -521,7 +521,7 @@ export function HomePage() {
         </div>
 
         <button onClick={() => navigate('/register')} className="btn-green w-full mt-6">
-          Join EcoConnect — It's Free
+          Join Econnect — It's Free
         </button>
         <p className="text-center text-sm text-gray-400 mt-3">
           Already a member?{' '}

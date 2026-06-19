@@ -1,5 +1,5 @@
 // =============================================================================
-// PAGES — EcoConnect React
+// PAGES — Econnect React
 // =============================================================================
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ export function LoginPage() {
       {/* Hero */}
       <div className="bg-gradient-to-br from-eco-dark to-green-primary px-6 py-10 text-white text-center">
         <div className="text-5xl mb-3">🌿</div>
-        <h1 className="font-display text-2xl font-bold">EcoConnect</h1>
+        <h1 className="font-display text-2xl font-bold">Econnect</h1>
         <p className="text-sm opacity-75 mt-2">Protect Nature, Together with AI</p>
       </div>
 
@@ -108,7 +108,7 @@ export function RegisterPage() {
     mutationFn: (data) => authApi.register(data),
     onSuccess: ({ data }) => {
       setAuth(data.user, data.token)
-      toast.success('Bienvenue sur EcoConnect! 🎉')
+      toast.success('Bienvenue sur Econnect! 🎉')
       navigate('/dashboard')
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Erreur lors de l\'inscription'),
@@ -119,7 +119,7 @@ export function RegisterPage() {
       <div className="bg-gradient-to-br from-eco-dark to-green-primary px-6 py-8 text-white text-center">
         <div className="text-4xl mb-2">🌿</div>
         <h2 className="font-display text-xl font-bold">Créer un compte</h2>
-        <p className="text-xs opacity-75 mt-1">Rejoins la communauté EcoConnect</p>
+        <p className="text-xs opacity-75 mt-1">Rejoins la communauté Econnect</p>
       </div>
 
       <div className="flex-1 px-6 py-6">

@@ -25,7 +25,7 @@ function TopNav() {
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-primary to-green-light flex items-center justify-center text-lg">
           🌿
         </div>
-        <span className="font-display font-bold text-green-primary text-[17px]">EcoConnect</span>
+        <span className="font-display font-bold text-green-primary text-[17px]">Econnect</span>
       </button>
 
       <div className="flex items-center gap-3">
